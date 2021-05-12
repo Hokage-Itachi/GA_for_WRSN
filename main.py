@@ -5,13 +5,25 @@ class Node:
         self.y = y
         self.p = p
 
+    def __repr__(self):
+        return self.label
+
+
+class Individual:
+    def __init__(self, path, fitness=0):
+        self.path = path
+        self.fitness = fitness
+
+    def __repr__(self):
+        return "[Idv:" + str(self.path) + ", fitness= " + str(self.fitness) + "]"
+
 
 class WRSN:
 
-    def input_from_file(self, filname):
+    def input_from_file(self, filename):
         """
         Read input from file
-        :param filname:
+        :param filename:
         :return:
         """
         pass
@@ -32,7 +44,8 @@ class WRSN:
                     if i == node_number - 1:
                         if len(population) == node_number ** 2:
                             return
-                        population.append(ivd[0:node_number])
+
+                        population.append(Individual(ivd[0:node_number]))
                     else:
                         permutation(i + 1, lst)
 
@@ -81,3 +94,7 @@ class WRSN:
 
 if __name__ == "__main__":
     wrsn = WRSN()
+
+    # p = wrsn.initialize(4)
+    # for i in p:
+    #     print(i)
