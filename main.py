@@ -1,9 +1,18 @@
 class Node:
-    def __init__(self, label, x, y, p):
+    def __init__(self, label, x, y, p, E_c):
+        """
+
+        :param label: name of node
+        :param x: x- coordinate
+        :param y: y- coordinate
+        :param p: power consumption
+        :param E_c: current energy
+        """
         self.label = label
         self.x = x
         self.y = y
         self.p = p
+        self.E_c = E_c
 
     def __repr__(self):
         return self.label
@@ -19,6 +28,21 @@ class Individual:
 
 
 class WRSN:
+    path = "small-net/grid/base_station_(250.0, 250.0)/"
+
+    def __init__(self):
+        # list node of network
+        self.nodes = []
+        # maximum energy of each node. Calculation Unit(J)
+        self.E_max = 10800
+        # minimum energy of each node. Calculation Unit(J)
+        self.E_min = 540
+        # Charging energy of mobile charger. Calculation Unit(J)
+        self.E_MC = 108000
+        # Moving power of mobile charger. Calculation Unit(J/s)
+        self.P_M = 1
+        # Charging power of mobile charger. Calculation Unit(J/s)
+        self.U = 5
 
     def input_from_file(self, filename):
         """
@@ -26,7 +50,25 @@ class WRSN:
         :param filename:
         :return:
         """
-        pass
+
+        f = open(self.path + filename, "r", encoding="utf-8")
+
+        lines = f.readlines()
+        n = len(lines)
+        for i in range(1, n):
+            line = lines[i]
+            # print(lines)
+            params = line.split()
+            # print(params)
+
+            x = float(params[0])
+            y = float(params[1])
+            p = float(params[2])
+            e_c = float(params[3])
+
+            node = Node(str(i), x, y, p, e_c)
+
+            self.nodes.append(node)
 
     def initialize(self, node_number):
         """
@@ -94,6 +136,7 @@ class WRSN:
 
 if __name__ == "__main__":
     wrsn = WRSN()
+    wrsn.input_from_file("gr25_01_simulated.txt")
 
     # p = wrsn.initialize(4)
     # for i in p:
