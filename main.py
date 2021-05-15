@@ -1,5 +1,5 @@
 import itertools
-import sys
+import random
 
 
 class Node:
@@ -23,12 +23,12 @@ class Node:
 
 
 class Individual:
-    def __init__(self, path, fitness=0):
-        self.path = path
+    def __init__(self, chromosome, fitness=0):
+        self.chromosome = chromosome
         self.fitness = fitness
 
     def __repr__(self):
-        return "[Idv:" + str(self.path) + ", fitness= " + str(self.fitness) + "]"
+        return "[Idv:" + str(self.chromosome) + ", fitness= " + str(self.fitness) + "]"
 
 
 class WRSN:
@@ -95,7 +95,9 @@ class WRSN:
 
         p = itertools.permutations(cycle)
         for i in range(node_num ** 2):
-            self.population.append(Individual(p.__next__()))
+            chromosome = list(p.__next__())
+            fitness = self.cal_fitness(chromosome)
+            self.population.append(Individual(chromosome, fitness))
         # print("here")
 
     def crossover(self, dad, mom):
@@ -105,7 +107,10 @@ class WRSN:
         :param mom:
         :return: child_1, child_2
         """
-        pass
+
+        child_1 = None
+        child_2 = None
+        return child_1, child_2
 
     def mutation(self, individual):
         """
@@ -113,12 +118,20 @@ class WRSN:
         :param individual:
         :return: new_individual
         """
-        pass
+
+        chromosome = individual.chromosome
+        fitness = individual.fitness
+        m = random.Random().randint(0, len(chromosome))
+
+        n = random.Random().randint(0, len(chromosome))
+
+        chromosome[m], chromosome[n] = chromosome[n], chromosome[m]
+
+        return Individual(chromosome, fitness)
 
     def selection(self):
         """
         Select population_size / 2 best individual and choose random population-size / 2 individual left
-        :param population
         :return: selected_population
         """
         pass
@@ -131,10 +144,37 @@ class WRSN:
 
         pass
 
+    def apply_operator(self):
+        copied_population = self.population[:]
+        while len(copied_population) > 0:
+            n = len(copied_population) - 1
+            k = random.Random().randint(0, n)
+            h = n - k
+
+            dad = copied_population[k]
+            mom = copied_population[h]
+
+            child_1, child_2 = self.crossover(dad, mom)
+
+            child_1 = self.mutation(child_1)
+            child_2 = self.mutation(child_2)
+
+            copied_population.remove(dad)
+            copied_population.remove(mom)
+
+            self.population.append(child_1)
+            self.population.append(child_2)
+
+    def cal_fitness(self, chromosome):
+        return 0
+
 
 if __name__ == "__main__":
     wrsn = WRSN("gr25_01_simulated.txt")
 
-    wrsn.initialize()
+    for i in range(30):
+        wrsn.initialize()
 
-
+        for k in range(100):
+            wrsn.apply_operator()
+            wrsn.selection()
