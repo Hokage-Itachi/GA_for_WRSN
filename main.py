@@ -108,9 +108,52 @@ class WRSN:
         :return: child_1, child_2
         """
 
-        child_1 = None
-        child_2 = None
+        child_1 = self.ox_crossover(dad.chromosome, mom.chromosome)
+        child_2 = self.ox_crossover(mom.chromosome, dad.chromosome)
         return child_1, child_2
+
+    def ox_crossover(self, dad, mom):
+        """
+        Create child using Order Crossover
+        :param dad: chromosome dad
+        :param mom: chromosome mom
+        :return: child chromosome
+        """
+        r = random.Random()
+        n = len(dad)
+        p = r.randint(0, n)
+        q = r.randint(0, n)
+
+        while q == p:
+            q = r.randint(0, n)
+        if p > q:
+            p, q = q, p
+
+        left_segment = [0 for i in range(0, n)]
+        center_segment = [dad[i] for i in range(p, q)]
+        right_segment = [0 for i in range(0, n)]
+
+        i = 0
+        for item in mom:
+            if not item in center_segment:
+                if i < p:
+                    left_segment[i] = item
+                    i += 1
+                    continue
+                elif i == p:
+                    i = q
+                    right_segment[i] = item
+                    i += 1
+                    continue
+                if i > q:
+                    right_segment[i] = item
+                    i += 1
+                    continue
+                if i == n:
+                    break
+
+        child = left_segment[0:p] + center_segment[:] + right_segment[q:n]
+        return child
 
     def mutation(self, individual):
         """
@@ -134,15 +177,19 @@ class WRSN:
         Select population_size / 2 best individual and choose random population-size / 2 individual left
         :return: selected_population
         """
-        pass
+        k = len(self.population) // 4
+        sorted(self.population, key=lambda individual: individual.fitness, reverse=True)
+        selected_population = self.population[0:k]
+        n = len(selected_population)
+        while n < 2 * k:
+            i = random.Random().randint(k, len(self.population))
+            idv = self.population[i]
+            selected_population.append(idv)
+            self.population.remove(idv)
 
-    def print_best_individual(self):
-        """
-        Print best individual of population
-        :return: best_individual
-        """
+            n += 1
 
-        pass
+        self.population = selected_population[:]
 
     def apply_operator(self):
         copied_population = self.population[:]
@@ -172,9 +219,13 @@ class WRSN:
 if __name__ == "__main__":
     wrsn = WRSN("gr25_01_simulated.txt")
 
-    for i in range(30):
-        wrsn.initialize()
+    wrsn.initialize()
+    dad = wrsn.population[0]
+    mom = wrsn.population[1]
 
-        for k in range(100):
-            wrsn.apply_operator()
-            wrsn.selection()
+    c1, c2 = wrsn.crossover(dad, mom)
+    print(c1)
+    print(c2)
+    # for k in range(100):
+    #     wrsn.apply_operator()
+    #     wrsn.selection()
