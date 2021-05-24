@@ -84,20 +84,21 @@ class WRSN:
 
     def initialize(self):
         """
-        Initialize population by backtracking.
-        :return: population
+        Initialize population by shuffle init list
+
         """
 
-        # backtracking
-
         node_num = len(self.nodes)
-        cycle = [i for i in self.nodes]
+        init_chromosome = [i for i in self.nodes]
 
-        p = itertools.permutations(cycle)
-        for i in range(node_num ** 2):
-            chromosome = list(p.__next__())
-            fitness = self.cal_fitness(chromosome)
-            self.population.append(Individual(chromosome, fitness))
+        while len(self.population) < node_num ** 2:
+            copy_chromosome = init_chromosome[:]
+
+            random.shuffle(copy_chromosome)
+            if copy_chromosome not in self.population:
+                fitness = self.cal_fitness(copy_chromosome)
+                self.population.append(Individual(copy_chromosome, fitness))
+
         # print("here")
 
     def crossover(self, dad, mom):
@@ -223,6 +224,8 @@ if __name__ == "__main__":
     dad = wrsn.population[0]
     mom = wrsn.population[1]
 
+    # for i in wrsn.population:
+    #     print(i)
     c1, c2 = wrsn.crossover(dad, mom)
     print(c1)
     print(c2)
