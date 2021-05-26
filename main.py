@@ -1,4 +1,4 @@
-import itertools
+import math
 import random
 
 
@@ -23,7 +23,7 @@ class Node:
 
 
 class Individual:
-    def __init__(self, chromosome, fitness=0):
+    def __init__(self, chromosome, fitness=0.0):
         self.chromosome = chromosome
         self.fitness = fitness
 
@@ -51,7 +51,12 @@ class WRSN:
         self.P_M = 1
         # Charging power of mobile charger. Calculation Unit(J/s)
         self.U = 5
+        # total time for a cycle
+        self.total_time = 20000
+        # speed of MC. Calculation Unit(m/s)
+        self.v = 5
 
+        self.base_station = None
         self.population = []
 
         self.input_from_file(filename)
@@ -67,6 +72,7 @@ class WRSN:
 
         lines = f.readlines()
         n = len(lines)
+        self.base_station = Node("0", float(lines[0].split()[0]), float(lines[0].split()[1]), 0, 0)
         for i in range(1, n):
             line = lines[i]
             # print(lines)
@@ -96,7 +102,7 @@ class WRSN:
 
             random.shuffle(copy_chromosome)
             if copy_chromosome not in self.population:
-                fitness = self.cal_fitness(copy_chromosome)
+                fitness = self.calc_fitness(copy_chromosome)
                 self.population.append(Individual(copy_chromosome, fitness))
 
         # print("here")
@@ -110,8 +116,10 @@ class WRSN:
         """
 
         child_1 = self.ox_crossover(dad.chromosome, mom.chromosome)
+        fitness_1 = self.calc_fitness(child_1)
         child_2 = self.ox_crossover(mom.chromosome, dad.chromosome)
-        return child_1, child_2
+        fitness_2 = self.calc_fitness(child_2)
+        return Individual(child_1, fitness_1), Individual(child_2, fitness_2)
 
     def ox_crossover(self, dad, mom):
         """
@@ -165,9 +173,9 @@ class WRSN:
 
         chromosome = individual.chromosome
         fitness = individual.fitness
-        m = random.Random().randint(0, len(chromosome))
+        m = random.Random().randint(0, len(chromosome) - 1)
 
-        n = random.Random().randint(0, len(chromosome))
+        n = random.Random().randint(0, len(chromosome) - 1)
 
         chromosome[m], chromosome[n] = chromosome[n], chromosome[m]
 
@@ -183,7 +191,7 @@ class WRSN:
         selected_population = self.population[0:k]
         n = len(selected_population)
         while n < 2 * k:
-            i = random.Random().randint(k, len(self.population))
+            i = random.Random().randint(k, len(self.population) - 1)
             idv = self.population[i]
             selected_population.append(idv)
             self.population.remove(idv)
@@ -194,10 +202,13 @@ class WRSN:
 
     def apply_operator(self):
         copied_population = self.population[:]
-        while len(copied_population) > 0:
+
+        while len(copied_population) > 1:
             n = len(copied_population) - 1
             k = random.Random().randint(0, n)
             h = n - k
+            if h == k:
+                h -= 1
 
             dad = copied_population[k]
             mom = copied_population[h]
@@ -206,15 +217,36 @@ class WRSN:
 
             child_1 = self.mutation(child_1)
             child_2 = self.mutation(child_2)
-
-            copied_population.remove(dad)
-            copied_population.remove(mom)
+            try:
+                copied_population.remove(dad)
+                copied_population.remove(mom)
+            except ValueError as e:
+                print(k, h)
+                print(len(copied_population))
 
             self.population.append(child_1)
             self.population.append(child_2)
 
-    def cal_fitness(self, chromosome):
-        return 0
+    def calc_fitness(self, chromosome):
+        t_tsp = self.euclid_distance(self.base_station, chromosome[0]) / self.v
+        total_charge_time = 0
+
+        for i in range(len(chromosome) - 1):
+            total_charge_time += self.get_time_charge(chromosome[i], t_tsp + total_charge_time)
+            t_tsp += self.euclid_distance(chromosome[i], chromosome[i + 1]) / self.v
+        t_tsp += self.euclid_distance(chromosome[-1], self.base_station) / self.v
+
+        return (self.total_time - t_tsp - total_charge_time) / self.total_time
+
+    def euclid_distance(self, from_node, to_node):
+
+        return math.sqrt((from_node.x - to_node.x) ** 2 + (from_node.y - to_node.y) ** 2)
+
+    def get_time_charge(self, node, previous_time):
+        needed_charge_energy = node.p * previous_time
+
+        time_charge = needed_charge_energy / self.U
+        return time_charge
 
 
 if __name__ == "__main__":
@@ -224,11 +256,11 @@ if __name__ == "__main__":
     dad = wrsn.population[0]
     mom = wrsn.population[1]
 
-    # for i in wrsn.population:
-    #     print(i)
-    c1, c2 = wrsn.crossover(dad, mom)
-    print(c1)
-    print(c2)
-    # for k in range(100):
-    #     wrsn.apply_operator()
-    #     wrsn.selection()
+    # c1, c2 = wrsn.crossover(dad, mom)
+    # print(c1)
+    # print(c2)
+    for k in range(100):
+        wrsn.apply_operator()
+        wrsn.selection()
+
+    print(wrsn.population[0])
